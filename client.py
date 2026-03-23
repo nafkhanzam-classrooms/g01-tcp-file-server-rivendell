@@ -1,4 +1,5 @@
 import socket
+import os
 
 HOST = '127.0.0.1'
 PORT = 8888
@@ -17,8 +18,35 @@ def main():
         while True:
             message = input("> ")
             if not message: continue
-            
-            client.sendall((message + '\n').encode())
+
+            # UPLOAD FEATURE
+            if message.startswith('/upload'):
+                try:
+                    parts = message.split()
+                    filepath = parts[1]
+                    
+                    if os.path.exists(filepath):
+                        filename = os.path.basename(filepath)
+                        filesize = os.path.getsize(filepath)
+                        header = f"/upload {filename} {filesize}\n"
+                        client.sendall(header.encode())
+                        
+                        with open(filepath, "rb") as f:
+                            while True:
+                                chunk = f.read(BUFF_SIZE)
+                                if not chunk: 
+                                    break
+                                client.sendall(chunk)
+                        print(f"[Client] Blast! Sending {filename} ({filesize} bytes)...")
+                    else:
+                        print("The archives hold no such record. (File not found locally)")
+                        continue
+                except IndexError:
+                    print("Even the wise must name their burden. Usage: /upload <filename>")
+                    continue
+
+            else: 
+                client.sendall((message + '\n').encode())
             
             data = client.recv(BUFF_SIZE)
             if not data:
