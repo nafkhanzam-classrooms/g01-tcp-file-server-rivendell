@@ -213,3 +213,17 @@ python client.py
 ```
 
 ## Screenshot Hasil
+
+Testing dengan `server-sync.py`, gagal ketika client lain mencoba untuk mengakses server (`/list`)
+<img width="1538" height="268" alt="image" src="https://github.com/user-attachments/assets/b5b9fb91-1184-4125-9b1a-acd4e1d21fc5" />
+
+Testing dengan `server-thread.py`, kedua client (1 & 2), berhasil mengakses server secara bersamaan.
+<img width="1522" height="370" alt="image" src="https://github.com/user-attachments/assets/af44b8b0-40ab-4fec-9c53-20b6904790f9" />
+
+Testing dengan `server-select.py`
+<img width="1536" height="374" alt="image" src="https://github.com/user-attachments/assets/c9744200-09cc-4ab2-a90e-525b5bfc2ac5" />
+
+Testing dengan `server-poll.py`
+<img width="1544" height="380" alt="image" src="https://github.com/user-attachments/assets/fa688c28-fb44-449d-a33f-5e47291f10a5" />
+
+
