@@ -14,5 +14,19 @@ Link ditaruh di bawah ini
 ```
 
 ## Penjelasan Program
+### Client.py
+Program _client_ berbasis TCP yang _acts_ sebagai requester pada arsitektur _client-server_ ini.
+
+### Server-Sync.py
+Program yang memproses _request_ dari _client_ yang diproses secara _iterative_ menggunakan _Blocking I/O_.
+
+### Server-Thread.py
+Program untuk _handle_ koneksi _client_ secara concurrently.
+
+### Server-Select.py
+Program untuk mekanisme multiplexing.
+
+### Server-Poll.py
+Program dengan memanfaatkan poll yang tidak menghapus data input, sehingga array input yang sama dapat digunakan berulang kali.
 
 ## Screenshot Hasil
