@@ -14,19 +14,202 @@ Link ditaruh di bawah ini
 ```
 
 ## Penjelasan Program
-### Client.py
-Program _client_ berbasis TCP yang _acts_ sebagai requester pada arsitektur _client-server_ ini.
 
-### Server-Sync.py
-Program yang memproses _request_ dari _client_ yang diproses secara _iterative_ menggunakan _Blocking I/O_.
+Project ini adalah implementasi aplikasi client-server berbasis TCP socket.
+Fitur utamanya mencakup:
 
-### Server-Thread.py
-Program untuk _handle_ koneksi _client_ secara concurrently.
+- koneksi multi-client,
+- transfer file (upload dan download),
+- melihat daftar file di server,
+- serta echo message untuk komunikasi dasar.
 
-### Server-Select.py
-Program untuk mekanisme multiplexing.
+Yang kami eksplorasi di tugas ini bukan hanya fiturnya, tapi juga cara server menangani banyak client (concurrency). Karena itu, ada 4 versi server dengan pendekatan yang berbeda:
 
-### Server-Poll.py
-Program dengan memanfaatkan poll yang tidak menghapus data input, sehingga array input yang sama dapat digunakan berulang kali.
+```
+server-sync.py   -> sequential (satu client per waktu)
+server-thread.py -> multithreading
+server-select.py -> I/O multiplexing dengan select
+server-poll.py   -> I/O multiplexing dengan poll
+```
+
+Satu file client (`client.py`) bisa dipakai untuk berinteraksi dengan semua versi server tersebut.
+
+### Cara Kerja Sistem
+
+Alur komunikasinya sederhana:
+
+1. Client membuka koneksi TCP ke server.
+2. Client mengirim command (contoh: `/list`, `/upload`, `/download`).
+3. Server membaca request.
+4. Server memproses command sesuai logika.
+5. Server mengirim response ke client.
+
+Semua data dikirim lewat byte stream TCP dengan buffer 1024 byte.
+
+### Format Komunikasi
+
+Secara umum, data dikirim dalam dua tahap:
+
+1. Header command (teks), format: `[COMMAND ARGUMENT]`
+2. Data biner (jika dibutuhkan), misalnya isi file saat upload/download
+
+Contoh header upload:
+
+```
+/upload file.txt 100
+```
+
+Server akan mem-parsing nama file dan ukuran file, lalu menerima data file sesuai ukuran tersebut.
+
+### Fitur Utama
+
+#### 1) `/list` - Melihat daftar file di server
+
+Client mengirim:
+
+```
+/list
+```
+
+Server membaca isi folder `server_folder`, lalu mengirimkan daftar file ke client.
+
+#### 2) `/upload` - Mengirim file ke server
+
+Client mengirim header:
+
+```
+/upload <filename> <filesize>
+```
+
+Setelah itu, client mengirim isi file dalam bentuk biner.
+
+Di sisi server:
+
+- ukuran file dibaca dari header,
+- data diterima bertahap sampai ukuran terpenuhi,
+- file disimpan ke `server_folder`.
+
+Contoh pola loop penerimaan:
+
+```python
+while received < file_size:
+    chunk = recv(...)
+```
+
+Pola ini memastikan data diterima lengkap sesuai ukuran file.
+
+#### 3) `/download` - Mengambil file dari server
+
+Client request:
+
+```
+/download <filename>
+```
+
+Jika file ada, server mengirim header:
+
+```
+/incoming <filename> <filesize>
+```
+
+Lalu server mengirim isi file.
+
+Client kemudian:
+
+- mem-parsing header,
+- menerima data file,
+- menyimpannya ke local storage.
+
+Catatan: client memakai fungsi `unique()` agar nama file hasil download tidak menimpa file yang sudah ada.
+
+#### 4) Echo message
+
+Jika command tidak dikenali, server akan mengembalikan pesan echo.
+
+Contoh:
+
+```
+hello
+```
+
+Response:
+
+```
+[Lord Elrond Echo]: hello
+```
+
+### Perbedaan Implementasi Server
+
+#### 1) `server-sync.py` (Synchronous)
+
+Server melayani satu client dalam satu waktu.
+
+```
+accept -> handle -> selesai -> accept berikutnya
+```
+
+- Kelebihan: sederhana.
+- Kekurangan: client lain harus menunggu.
+
+#### 2) `server-thread.py` (Multithreading)
+
+Setiap client ditangani oleh thread terpisah.
+
+```
+accept -> buat thread -> thread handle client
+```
+
+Keuntungan: beberapa client bisa dilayani paralel.
+
+#### 3) `server-select.py` (Select)
+
+Menggunakan `select()` untuk memantau banyak socket dalam satu thread.
+
+```
+select(list_socket) -> cek socket yang ready
+```
+
+Keuntungan: tetap single-thread tetapi mampu menangani banyak koneksi.
+
+#### 4) `server-poll.py` (Poll)
+
+Mirip pendekatan `select`, namun umumnya lebih scalable untuk jumlah socket yang lebih banyak.
+
+### Struktur Folder
+
+```
+.
+├── client.py
+├── server-sync.py
+├── server-thread.py
+├── server-select.py
+├── server-poll.py
+└── server_folder/
+```
+
+### Cara Menjalankan
+
+1. Jalankan salah satu server:
+
+```bash
+python server-sync.py
+python server-thread.py
+python server-select.py
+python server-poll.py
+```
+
+2. Jalankan client:
+
+```bash
+python client.py
+```
+
+3. Gunakan command dari client:
+
+```text
+/list
+/upload path/to/file.txt
+/download file.txt
+```
 
 ## Screenshot Hasil
